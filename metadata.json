@@ -1,0 +1,5 @@
+{
+  "name": "SonicStadium - 4D Concert Simulator",
+  "description": "An interactive 4D audio experience simulating a KPOP concert environment at Kaohsiung National Stadium. Features real-time spatial audio processing, frequency attenuation, and haptic feedback.",
+  "requestFramePermissions": []
+}
