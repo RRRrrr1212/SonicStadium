@@ -6,7 +6,8 @@ class AudioEngine {
   private sourceNode: MediaElementAudioSourceNode | null = null;
   
   // Nodes Chain
-  private gainNode: GainNode | null = null;
+  private gainNode: GainNode | null = null; // Zone-specific attenuation
+  private masterGainNode: GainNode | null = null; // Global volume control
   private pannerNode: StereoPannerNode | null = null;
   private filterNode: BiquadFilterNode | null = null;
   private analyserNode: AnalyserNode | null = null;
@@ -50,6 +51,7 @@ class AudioEngine {
 
     this.context = null;
     this.gainNode = null;
+    this.masterGainNode = null;
     this.pannerNode = null;
     this.filterNode = null;
     this.analyserNode = null;
@@ -96,6 +98,7 @@ class AudioEngine {
     // Create Nodes
     this.sourceNode = this.context.createMediaElementSource(this.audioElement);
     this.gainNode = this.context.createGain();
+    this.masterGainNode = this.context.createGain();
     this.pannerNode = this.context.createStereoPanner();
     this.filterNode = this.context.createBiquadFilter();
     this.analyserNode = this.context.createAnalyser();
@@ -121,17 +124,18 @@ class AudioEngine {
     this.sourceNode.connect(this.filterNode);
     this.filterNode.connect(this.pannerNode);
 
-    // Dry Path: Panner -> DryGain -> MainGain -> Destination
+    // Dry Path: Panner -> DryGain -> ZoneGain
     this.pannerNode.connect(this.dryGainNode);
     this.dryGainNode.connect(this.gainNode);
 
-    // Wet Path: Panner -> Convolver -> ReverbGain -> MainGain -> Destination
+    // Wet Path: Panner -> Convolver -> ReverbGain -> ZoneGain
     this.pannerNode.connect(this.convolverNode);
     this.convolverNode.connect(this.reverbGainNode);
     this.reverbGainNode.connect(this.gainNode);
 
-    // Final Output
-    this.gainNode.connect(this.analyserNode);
+    // Final Output Chain: ZoneGain -> MasterGain -> Analyser -> Destination
+    this.gainNode.connect(this.masterGainNode);
+    this.masterGainNode.connect(this.analyserNode);
     this.analyserNode.connect(this.context.destination);
 
     this.isInitialized = true;
@@ -189,7 +193,7 @@ class AudioEngine {
     // timeConstant = transitionTime / 4 ensures we reach ~98% of the target value by the end of transitionTime
     const timeConstant = transitionTime / 4;
 
-    // Volume (Master Gain) - Automated based on Zone Gain
+    // Volume (Zone Attenuation Gain)
     this.gainNode.gain.setTargetAtTime(params.gain, now, timeConstant);
 
     // Frequency (LowPass)
@@ -216,6 +220,14 @@ class AudioEngine {
         // Gives a feeling of UI interaction without implying bass weight
         navigator.vibrate(15);
       }
+    }
+  }
+
+  public setMasterVolume(volume: number): void {
+    if (this.context && this.masterGainNode) {
+        const now = this.context.currentTime;
+        // Smooth transition to prevent clicking/zipper noise
+        this.masterGainNode.gain.setTargetAtTime(volume, now, 0.05);
     }
   }
 

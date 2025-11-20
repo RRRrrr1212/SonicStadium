@@ -12,7 +12,7 @@ const StadiumMap: React.FC<StadiumMapProps> = ({ currentZoneId, onZoneSelect }) 
     <div className="relative w-full max-w-3xl mx-auto aspect-[4/3] p-4">
       <svg 
         viewBox="0 0 800 700" 
-        className="w-full h-full drop-shadow-[0_0_15px_rgba(56,189,248,0.1)]"
+        className="w-full h-full shadow-map-path"
         style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))' }}
       >
         {/* Stadium Base/Ground */}

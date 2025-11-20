@@ -14,6 +14,7 @@ export default function App() {
   const [isFallbackMode, setIsFallbackMode] = useState(false);
   const [trackName, setTrackName] = useState("this_is_for.mp3");
   const [isLoading, setIsLoading] = useState(false);
+  const [masterVolume, setMasterVolume] = useState(1.0); // Global volume control
 
   const startExperience = async (url: string, name: string) => {
     try {
@@ -22,6 +23,9 @@ export default function App() {
       setTrackName(name);
       
       audioEngine.init(url);
+      // Initialize volume
+      audioEngine.setMasterVolume(masterVolume);
+
       await audioEngine.play();
       
       setIsPlaying(true);
@@ -107,13 +111,19 @@ export default function App() {
     audioEngine.updateZone(zone.audio);
   };
 
+  const handleMasterVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVol = parseFloat(e.target.value);
+    setMasterVolume(newVol);
+    audioEngine.setMasterVolume(newVol);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-cyan-500/30 flex flex-col">
       
       {/* Navbar */}
       <header className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+          <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-glow-cyan-sm">
             <Waves size={18} className="text-slate-950" />
           </div>
           <h1 className="font-bold text-lg tracking-tight text-white">
@@ -132,7 +142,7 @@ export default function App() {
       <main className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
         
         {/* Left Panel: Visual Map */}
-        <div className="flex-1 relative flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 to-slate-950 p-4">
+        <div className="flex-1 relative flex items-center justify-center bg-radial-concert p-4">
           {/* Grid Background Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(#94a3b8 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
@@ -150,7 +160,7 @@ export default function App() {
                  <button 
                    onClick={handleStart}
                    disabled={isLoading}
-                   className="group relative px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-lg rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_50px_rgba(6,182,212,0.6)] hover:scale-105 disabled:opacity-50 disabled:cursor-wait"
+                   className="group relative px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-lg rounded-full transition-all duration-300 shadow-glow-cyan-md shadow-glow-cyan-lg hover:scale-105 disabled:opacity-50 disabled:cursor-wait"
                  >
                    <span className="flex items-center gap-2">
                      {isLoading ? (
@@ -232,6 +242,23 @@ export default function App() {
              <Visualizer isPlaying={isPlaying} colorHex={currentZone?.color || '#06b6d4'} />
           </div>
 
+          {/* Master Volume Slider */}
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 backdrop-blur-sm">
+              <div className="flex justify-between text-xs mb-2 text-slate-300 font-medium">
+                <span className="flex items-center gap-1"><Volume2 size={14}/> Master Output</span>
+                <span>{Math.round(masterVolume * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value={masterVolume} 
+                onChange={handleMasterVolumeChange}
+                className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300"
+              />
+          </div>
+
           {/* Zone Info Card */}
           <div className="flex-1 bg-slate-800/50 rounded-xl p-5 border border-slate-700/50 backdrop-blur-sm">
             <h3 className="text-slate-400 text-xs uppercase tracking-wider mb-4">Acoustic Environment</h3>
@@ -247,7 +274,7 @@ export default function App() {
                   {/* Volume Meter */}
                   <div>
                     <div className="flex justify-between text-xs mb-1 text-slate-300">
-                      <span>Volume Attenuation</span>
+                      <span>Distance Attenuation</span>
                       <span>{Math.round(currentZone.audio.gain * 100)}%</span>
                     </div>
                     <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
